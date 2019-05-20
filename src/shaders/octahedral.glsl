@@ -19,14 +19,38 @@ vec2 signNotZero(vec2 v) {
 }
 
 /** Assumes that v is a unit vector. The result is an octahedral vector on the [-1, +1] square. */
-vec2 octEncode(in vec3 v) {
-    float l1norm = abs(v.x) + abs(v.y) + abs(v.z);
-    vec2 result = v.xy * (1.0 / l1norm);
-    if (v.z < 0.0) {
-        result = (1.0 - abs(result.yx)) * signNotZero(result.xy);
-    }
-    return result;
-}
+// vec2 octEncode(in vec3 v) {
+//     float l1norm = abs(v.x) + abs(v.y) + abs(v.z);
+//     vec2 result = v.xy * (1.0 / l1norm);
+//     if (v.z < 0.0) {
+//         result = (1.0 - abs(result.yx)) * signNotZero(result.xy);
+//     }
+//     // return result;
+//     int n = 24;  // hyperparameter
+//     float M = float(1 << ((n/2) - 1)) - 1.0;
+//     // float cramped_result = result;
+//     // if (result < -1.0) {
+//     //   cramped_result = -1.0;
+//     // } else if (result > 1.0) {
+//     //   cramped_result = 1.0;
+//     // }
+//     result = floor(clamp(result, -1.0, +1.0) * M) * (1.0 / M);
+//     vec2 bestRepresentation = result;
+//     float highestCosine = dot(octDecode(result), v);
+
+//     for (int i = 0; i<= 1; ++i)
+//         for (int j = 0; j<= 1; ++j)
+//             if ((i != 0) || (j != 0)) {
+//                 vec2 candidate = vec2(i, j) * (1 / M) + result;
+//                 float cosine = dot(octDecode(candidate), v);
+//                 if (cosine > highestCosine) {
+//                     bestRepresentation = candidate;
+//                     highestCosine = cosine;
+//             }
+//         }
+
+//     return bestRepresentation;
+// }
 
 
 /** Returns a unit vector. Argument o is an octahedral vector packed via octEncode,
@@ -39,5 +63,37 @@ vec3 octDecode(vec2 o) {
     return normalize(v);
 }
 
+vec2 octEncode(in vec3 v) {
+    float l1norm = abs(v.x) + abs(v.y) + abs(v.z);
+    vec2 result = v.xy * (1.0 / l1norm);
+    if (v.z < 0.0) {
+        result = (1.0 - abs(result.yx)) * signNotZero(result.xy);
+    }
+    // return result;
+    int n = 30;  // hyperparameter
+    float M = float(1 << ((n/2) - 1)) - 1.0;
+    // float cramped_result = result;
+    // if (result < -1.0) {
+    //   cramped_result = -1.0;
+    // } else if (result > 1.0) {
+    //   cramped_result = 1.0;
+    // }
+    result = floor(clamp(result, -1.0, +1.0) * M) * (1.0 / M);
+    vec2 bestRepresentation = result;
+    float highestCosine = dot(octDecode(result), v);
+
+    for (int i = 0; i<= 1; ++i)
+        for (int j = 0; j<= 1; ++j)
+            if ((i != 0) || (j != 0)) {
+                vec2 candidate = vec2(i, j) * (1.0 / M) + result;
+                float cosine = dot(octDecode(candidate), v);
+                if (cosine > highestCosine) {
+                    bestRepresentation = candidate;
+                    highestCosine = cosine;
+            }
+        }
+
+    return bestRepresentation;
+}
 
 #endif
